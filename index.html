@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>📞 Simulador de llamadas con IA</title>
+    <style>
+        /* 1. FUENTE CORPORATIVA (Poppins) */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f0f2f5; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            color: #333;
+        }
+
+        /* 2. CONTENEDOR PRINCIPAL */
+        .crm-container { 
+            background: white; 
+            width: 100%; 
+            max-width: 700px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08); 
+            padding: 30px; 
+        }
+
+        h2 { 
+            color: #e5007f; 
+            text-align: center; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 15px; 
+            margin-top: 0;
+            font-weight: 700;
+        }
+
+        /* 3. PANEL DE CONFIGURACIÓN */
+        .panel-config { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-radius: 10px; 
+            padding: 20px; 
+            margin-bottom: 25px; 
+        }
+
+        .grid-campos { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+        }
+
+        .campo label { 
+            display: block; 
+            font-size: 0.85em; 
+            font-weight: 600; 
+            color: #666; 
+            margin-bottom: 5px;
+        }
+
+        .campo input, .campo select { 
+            width: 90%; 
+            padding: 10px; 
+            border: 1px solid #ced4da; 
+            border-radius: 6px; 
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+        }
+        
+        .campo input:focus, .campo select:focus {
+            border-color: #e5007f; 
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(229, 0, 127, 0.1);
+        }
+
+        .campo-full { grid-column: span 2; }
+        .campo-full input, .campo-full select { width: 95%; }
+
+        /* 4. BOTONES PRINCIPALES */
+        .botones-principales { display: flex; gap: 10px; margin-bottom: 15px;}
+        button { flex: 1; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 1.1em; cursor: pointer; transition: 0.2s;}
+        button.llamar { background-color: #107c10; box-shadow: 0 4px 10px rgba(16, 124, 16, 0.2); }
+        button.llamar:hover { background-color: #138a13; }
+        button.colgar { background-color: #d13438; box-shadow: 0 4px 10px rgba(209, 52, 56, 0.2); }
+        button.colgar:hover { background-color: #e04b50; }
+        button.descargar { background-color: #0078d4; flex: 0.5; font-size: 0.9em; }
+
+        /* 5. CAJA DE CHAT */
+        .chat-box { 
+            height: 350px; 
+            overflow-y: auto; 
+            border: 1px solid #eee; 
+            background: #fafafa; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .mensaje { padding: 12px 18px; border-radius: 18px; max-width: 80%; line-height: 1.5; font-size: 0.95em; }
+        .agente { background-color: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 5px; }
+        .cliente { background-color: #ffffff; align-self: flex-start; border: 1px solid #ddd; border-bottom-left-radius: 5px; }
+        .sistema { background-color: #fff3cd; color: #856404; align-self: center; font-size: 0.8em; font-weight: 600; padding: 8px 15px; border-radius: 20px; border: 1px solid #ffeeba; }
+        #estadoVoz { text-align: center; font-weight: 600; color: #777; height: 25px; margin-bottom: 10px; font-size: 0.9em; }
+
+        /* 6. PANEL DE AUDITORÍA (QA) */
+        #panelQA {
+            display: none;
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        #panelQA h3 {
+            color: #0050b3;
+            margin-top: 0;
+            border-bottom: 1px solid #91d5ff;
+            padding-bottom: 10px;
+            font-size: 1.1em;
+        }
+        #resultadoQA {
+            white-space: pre-wrap;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Scrollbar estilizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #999; }
+    </style>
+</head>
+<body>
+
+    <div class="crm-container">
+        <h2>📞 Simulador de llamadas con IA</h2>
+        
+        <div class="panel-config">
+            <div class="grid-campos">
+                
+                <div class="campo campo-full">
+                    <label style="color:#e5007f; font-size:1em;">🎯 Tipo de Escenario a Evaluar:</label>
+                    <select id="cfg_tipo" onchange="cambiarEscenario()">
+                        <option value="soporte">Soporte Técnico (Falla / Visita)</option>
+                        <option value="facturacion">Facturación (Consulta de Saldo / Queja)</option>
+                    </select>
+                </div>
+
+                <div class="campo"><label>Nombre Cliente:</label><input type="text" id="cfg_nombre" value="Juan Pérez"></div>
+                <div class="campo"><label>No. de Cuenta:</label><input type="text" id="cfg_cuenta" value="10 11 12 13"></div>
+                
+                <div id="bloqueSoporte" class="campo-full grid-campos" style="margin:0; padding:0;">
+                    <div class="campo"><label>Orden de Servicio:</label><input type="text" id="cfg_os" value="1-25 21 33 88 51 15"></div>
+                    <div class="campo"><label>Reagendar Turno:</label>
+                        <select id="cfg_turno">
+                            <option value="Matutino de 9 a 2">Matutino de 9 a 2</option>
+                            <option value="Vespertino de 2 a 6">Vespertino de 2 a 6</option>
+                        </select>
+                    </div>
+                    <div class="campo"><label>Forzar Reagendamiento al día:</label><input type="text" id="cfg_fecha" value="21 de Marzo"></div>
+                    <div class="campo"><label>Problema Principal:</label><input type="text" id="cfg_prob_soporte" value="El técnico quedó de ir hoy a reparar el internet, llevo todo el día esperando y no llegó."></div>
+                </div>
+
+                <div id="bloqueFacturacion" class="campo-full grid-campos" style="margin:0; padding:0; display:none;">
+                    <div class="campo"><label>Saldo Excesivo a Cobrar:</label><input type="text" id="cfg_saldo" value="$850.00 pesos"></div>
+                    <div class="campo"><label>Fecha Límite Pago:</label><input type="text" id="cfg_vencimiento" value="25 de este mes"></div>
+                    <div class="campo campo-full"><label>Problema Principal:</label><input type="text" id="cfg_prob_facturacion" value="Me llegó el recibo carísimo y yo solo contraté el paquete de 400."></div>
+                </div>
+
+            </div>
+        </div>
+        
+        <div class="botones-principales">
+            <button id="btnLlamada" class="llamar">🎙️ Conectar Llamada</button>
+            <button id="btnDescargar" class="descargar" style="display:none;">📄 Descargar Transcripción y QA</button>
+        </div>
+        
+        <div id="estadoVoz">Esperando inicio de simulación...</div>
+        
+        <div id="panelQA">
+            <h3>📊 Reporte de Calidad (QA) de la IA</h3>
+            <div id="resultadoQA">Generando evaluación...</div>
+        </div>
+
+        <div class="chat-box" id="chat"></div>
+    </div>
+
+    <script>
+        // Lógica visual: Mostrar/Ocultar campos
+        function cambiarEscenario() {
+            const tipo = document.getElementById("cfg_tipo").value;
+            if (tipo === "soporte") {
+                document.getElementById("bloqueSoporte").style.display = "grid";
+                document.getElementById("bloqueFacturacion").style.display = "none";
+            } else {
+                document.getElementById("bloqueSoporte").style.display = "none";
+                document.getElementById("bloqueFacturacion").style.display = "grid";
+            }
+        }
+
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+        const chat = document.getElementById("chat");
+        const btnLlamada = document.getElementById("btnLlamada");
+        const btnDescargar = document.getElementById("btnDescargar");
+        const estadoVoz = document.getElementById("estadoVoz");
+        const panelQA = document.getElementById("panelQA");
+        const resultadoQA = document.getElementById("resultadoQA");
+        
+        let reproductorAudio = new Audio();
+        let llamadaActiva = false;
+        let temporizadorSilencio;
+
+        function reiniciarTemporizador() {
+            clearTimeout(temporizadorSilencio);
+            if (llamadaActiva) {
+                temporizadorSilencio = setTimeout(() => {
+                    estadoVoz.innerText = "⏳ Silencio detectado...";
+                    ws.send(JSON.stringify({ silencio: true }));
+                }, 15000); // 15 segundos para silencio
+            }
+        }
+
+        // FUNCIÓN FALTANTE QUE DIBUJA LOS MENSAJES (¡Aquí estaba el error!)
+        function agregarMensaje(emisor, texto, clase) {
+            const div = document.createElement("div");
+            div.className = `mensaje ${clase}`;
+            div.innerHTML = clase === 'sistema' ? texto : `<strong>${emisor}:</strong> ${texto}`;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight; // Auto-scroll
+        }
+
+        const reconocimiento = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        reconocimiento.lang = 'es-MX';
+        reconocimiento.continuous = true;
+        reconocimiento.interimResults = false;
+
+        reconocimiento.onspeechstart = () => {
+            clearTimeout(temporizadorSilencio);
+            estadoVoz.innerText = "🗣️ Escuchando agente...";
+            if (!reproductorAudio.paused) {
+                reproductorAudio.pause(); 
+                agregarMensaje("Sistema", "Interrupción detectada.", "sistema");
+            }
+        };
+
+        reconocimiento.onresult = (evento) => {
+            const frase = evento.results[evento.results.length - 1][0].transcript;
+            estadoVoz.innerText = "Procesando...";
+            agregarMensaje("Agente", frase, "agente");
+            ws.send(JSON.stringify({ texto_agente: frase })); 
+        };
+
+        reconocimiento.onend = () => {
+            if (llamadaActiva) reconocimiento.start();
+        };
+
+        ws.onmessage = (evento) => {
+            if (typeof evento.data === "string") {
+                const datos = JSON.parse(evento.data);
+                
+                if (datos.tipo === "respuesta") {
+                    estadoVoz.innerText = "🔊 Cliente hablando...";
+                    agregarMensaje("Cliente", datos.texto, "cliente");
+                } else if (datos.tipo === "sistema") {
+                    agregarMensaje("Sistema", datos.texto, "sistema");
+                } else if (datos.tipo === "evaluacion") {
+                    // Recibir la evaluación de la IA (QA)
+                    resultadoQA.innerText = datos.texto;
+                    panelQA.style.display = "block";
+                    btnDescargar.style.display = "block";
+                    estadoVoz.innerText = "✅ Evaluación completada.";
+                }
+            } else {
+                const blobAudio = new Blob([evento.data], { type: 'audio/mp3' });
+                reproductorAudio.src = URL.createObjectURL(blobAudio);
+                reproductorAudio.play();
+                
+                reproductorAudio.onended = () => { 
+                    estadoVoz.innerText = "Silencio en la línea..."; 
+                    reiniciarTemporizador();
+                };
+            }
+        };
+
+        btnLlamada.onclick = () => {
+            // SEGURO ANTI-FALLOS: Si el servidor no está listo, te avisa.
+            if (ws.readyState !== WebSocket.OPEN) {
+                alert("⏳ El servidor aún se está conectando. Por favor, espera 1 segundo y vuelve a presionar el botón.");
+                return;
+            }
+
+            if (!llamadaActiva) {
+                // INICIAR LLAMADA
+                const tipoSel = document.getElementById("cfg_tipo").value;
+                const config = {
+                    tipo: tipoSel,
+                    nombre: document.getElementById("cfg_nombre").value,
+                    cuenta: document.getElementById("cfg_cuenta").value
+                };
+
+                if (tipoSel === "soporte") {
+                    config.os = document.getElementById("cfg_os").value;
+                    config.fecha = document.getElementById("cfg_fecha").value;
+                    config.turno = document.getElementById("cfg_turno").value;
+                    config.problema = document.getElementById("cfg_prob_soporte").value;
+                } else {
+                    config.saldo = document.getElementById("cfg_saldo").value;
+                    config.vencimiento = document.getElementById("cfg_vencimiento").value;
+                    config.problema = document.getElementById("cfg_prob_facturacion").value;
+                }
+
+                llamadaActiva = true;
+                btnDescargar.style.display = "none";
+                panelQA.style.display = "none"; // Ocultar QA anterior
+                chat.innerHTML = "";
+                
+                reconocimiento.start();
+                btnLlamada.innerText = "📵 Colgar y Evaluar Llamada";
+                btnLlamada.className = "colgar";
+                
+                ws.send(JSON.stringify({ config_escenario: config }));
+                reiniciarTemporizador();
+
+            } else {
+                // COLGAR Y EVALUAR LLAMADA
+                llamadaActiva = false;
+                reconocimiento.stop();
+                reproductorAudio.pause();
+                clearTimeout(temporizadorSilencio);
+                
+                btnLlamada.innerText = "🎙️ Conectar Llamada";
+                btnLlamada.className = "llamar";
+                
+                // Extraer toda la transcripción
+                let textoCompleto = "";
+                document.querySelectorAll('.mensaje').forEach(msg => {
+                    textoCompleto += msg.innerText + "\n";
+                });
+
+                if(textoCompleto.trim() !== "") {
+                    estadoVoz.innerText = "🧠 IA Auditando la llamada... Por favor espera.";
+                    ws.send(JSON.stringify({ accion: "evaluar", transcripcion: textoCompleto }));
+                } else {
+                    estadoVoz.innerText = "Llamada finalizada (Sin datos).";
+                }
+            }
+        };
+
+        // DESCARGAR TRANSCRIPCIÓN + EVALUACIÓN QA
+        btnDescargar.onclick = () => {
+            let texto = "--- TRANSCRIPCIÓN DE LA SIMULACIÓN ---\n\n";
+            document.querySelectorAll('.mensaje').forEach(msg => {
+                texto += msg.innerText + "\n";
+            });
+            
+            texto += "\n\n=======================================\n";
+            texto += "📊 AUDITORÍA DE CALIDAD (IA)\n";
+            texto += "=======================================\n\n";
+            texto += document.getElementById("resultadoQA").innerText;
+
+            const blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
+            const enlace = document.createElement("a");
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = "auditoria_izzi_" + new Date().getTime() + ".txt";
+            enlace.click();
+        };
+    </script>
+</body>
+</html>
