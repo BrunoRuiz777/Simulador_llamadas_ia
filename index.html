@@ -367,7 +367,7 @@
             const blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
             const enlace = document.createElement("a");
             enlace.href = URL.createObjectURL(blob);
-            enlace.download = "auditoria_izzi_" + new Date().getTime() + ".txt";
+            enlace.download = "auditoria_callcenter_" + new Date().getTime() + ".txt";
             enlace.click();
         };
     </script>

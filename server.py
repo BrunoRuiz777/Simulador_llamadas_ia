@@ -10,7 +10,7 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 # ¡ASEGÚRATE DE PONER TU LLAVE AQUÍ!
-cliente_groq = AsyncGroq(api_key="apiaqui")
+cliente_groq = AsyncGroq(api_key="TullaveDeGroqAquí")
 
 @app.get("/")
 async def get_dashboard():
@@ -47,7 +47,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 # -------------------------------
 
                 if tipo == "soporte":
-                    prompt_dinamico = f"""ACTÚA EXCLUSIVAMENTE COMO {c['nombre']}, UN CLIENTE REAL Y MUY MOLESTO DE IZZI. EL USUARIO ES EL AGENTE DE SOPORTE.
+                    prompt_dinamico = f"""ACTÚA EXCLUSIVAMENTE COMO {c['nombre']}, UN CLIENTE REAL Y MUY MOLESTO DE callcenter. EL USUARIO ES EL AGENTE DE SOPORTE.
 REGLA DE ORO: TÚ ERES EL CLIENTE. NUNCA ofrezcas ayuda, nunca saludes primero y NUNCA preguntes "¿En qué puedo ayudar?". Tú eres quien tiene el problema y el agente debe resolvértelo.
 REGLAS: Eres impaciente y sarcástico. Respuestas de máximo 15 palabras. RESPONDE SÓLO LO QUE TE PREGUNTAN. NO menciones tu problema hasta que el agente te pregunte el motivo de tu llamada.
 MEMORIA:
@@ -62,7 +62,7 @@ MEMORIA:
 - Cierre: No contestarás encuestas. Adiós."""
 
                 elif tipo == "facturacion":
-                    prompt_dinamico = f"""ACTÚA EXCLUSIVAMENTE COMO {c['nombre']}, UN CLIENTE REAL Y MUY MOLESTO DE IZZI POR COBROS EXCESIVOS. EL USUARIO ES EL AGENTE.
+                    prompt_dinamico = f"""ACTÚA EXCLUSIVAMENTE COMO {c['nombre']}, UN CLIENTE REAL Y MUY MOLESTO DE callcenter POR COBROS EXCESIVOS. EL USUARIO ES EL AGENTE.
 REGLA DE ORO: TÚ ERES EL CLIENTE. NUNCA ofrezcas ayuda ni preguntes "¿En qué puedo ayudar?". Tú eres quien exige respuestas.
 REGLAS: Eres desconfiado. Respuestas cortas. RESPONDE SÓLO LO QUE TE PREGUNTAN. NO menciones tu saldo hasta que pregunten "¿En qué le ayudo?".
 MEMORIA:
@@ -80,15 +80,15 @@ MEMORIA:
                 await websocket.send_text(json.dumps({"tipo": "sistema", "texto": f"🚀 Escenario '{tipo.upper()}' cargado y listo."}))
                 continue
 
-            # 2. AUDITOR DE CALIDAD (QA) - VERSIÓN MANUAL IZZI
+            # 2. AUDITOR DE CALIDAD (QA) - VERSIÓN MANUAL 
             elif "accion" in data and data["accion"] == "evaluar":
                 transcripcion = data["transcripcion"]
-                print("📊 [QA] Analizando transcripción con reglas de izzi...")
+                print("📊 [QA] Analizando transcripción con reglas de callcenter...")
                 
-                prompt_qa = f"""ERES UN AUDITOR DE CALIDAD (QA) ESTRICTO DE IZZI. Tu misión es evaluar la llamada del agente según el manual oficial de calidad.
+                prompt_qa = f"""ERES UN AUDITOR DE CALIDAD (QA) ESTRICTO DE callcenter. Tu misión es evaluar la llamada del agente según el manual oficial de calidad.
 
 CRITERIOS DE EVALUACIÓN OFICIALES (Base 100 puntos):
-1. APERTURA (20 pts): ¿El agente agradeció la llamada, dijo su nombre, identificó al cliente y mencionó explícitamente la empresa 'izzi'?
+1. APERTURA (20 pts): ¿El agente agradeció la llamada, dijo su nombre, identificó al cliente y mencionó explícitamente la empresa `callcenter`?
 2. CORTESÍA Y ETIQUETA (20 pts): ¿Se dirigió al cliente de 'Usted', usó palabras de cortesía (por favor/gracias) y mantuvo el profesionalismo?
 3. EMPATÍA Y DISCULPA (20 pts): Ante el reclamo del cliente, ¿ofreció una disculpa explícita por la falla del servicio o el inconveniente? (Obligatorio).
 4. SONDEO Y VALIDACIÓN (20 pts): ¿Entendió el problema sin hacer que el cliente repitiera información que ya había dado?
@@ -116,7 +116,7 @@ DETALLE POR RUBRO:
                         temperature=0.2 # Temperatura baja para que sea un juez estricto y objetivo
                     )
                     await websocket.send_text(json.dumps({"tipo": "evaluacion", "texto": completion.choices[0].message.content}))
-                    print("✅ [QA] Evaluación de izzi enviada al navegador.")
+                    print("✅ [QA] Evaluación de callcenter enviada al navegador.")
                 except Exception as e:
                     print(f"❌ [ERROR QA]: {e}")
                 continue
